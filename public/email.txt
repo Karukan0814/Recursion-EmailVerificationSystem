@@ -1,0 +1,10 @@
+Subject: Hello World
+To: your_email@example.com
+From: SpaceApp <your_smtp_gmail_email@gmail.com>
+
+Hello,
+
+This is the body of your email.
+
+Best regards,
+Your Name
