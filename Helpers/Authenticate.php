@@ -14,9 +14,14 @@ class Authenticate
 
     public static function loginAsUser(User $user): bool{
         if($user->getId() === null) throw new \Exception('Cannot login a user with no ID.');
-        if(isset($_SESSION[self::USER_ID_SESSION_KEY])) throw new \Exception('User is already logged in. Logout before continuing.');
+        // if(isset($_SESSION[self::USER_ID_SESSION_KEY])) throw new \Exception('User is already logged in. Logout before continuing.');
+        if(isset($_SESSION[self::USER_ID_SESSION_KEY])){
+            unset($_SESSION[self::USER_ID_SESSION_KEY]);
+
+        }
 
         $_SESSION[self::USER_ID_SESSION_KEY] = $user->getId();
+        error_log($_SESSION[self::USER_ID_SESSION_KEY]);
         return true;
     }
 
@@ -35,9 +40,25 @@ class Authenticate
         self::$authenticatedUser = $userDao->getById($_SESSION[self::USER_ID_SESSION_KEY]);
     }
 
+    // public static function isConfirmed(): bool{
+    //     self::retrieveAuthenticatedUser();
+
+    //     //ユーザー情報が存在する、かつユーザーがconfirm済みか
+    //     return self::$authenticatedUser !== null&&self::$authenticatedUser->getConfirmedAt()!==null;
+    // }
+
     public static function isLoggedIn(): bool{
         self::retrieveAuthenticatedUser();
-        return self::$authenticatedUser !== null;
+
+        //ユーザー情報が存在する
+        // $result=false;
+
+        // if(self::$authenticatedUser !== null&&self::$authenticatedUser->getConfirmedAt()!==null){
+        //     $result=true;
+        // }
+
+
+        return self::$authenticatedUser !== null&&self::$authenticatedUser->getConfirmedAt()!==null;
     }
 
     public static function getAuthenticatedUser(): ?User{
@@ -59,6 +80,7 @@ class Authenticate
         $hashedPassword = $userDAO->getHashedPasswordById(self::$authenticatedUser->getId());
 
         if (password_verify($password, $hashedPassword)){
+            error_log("password OK");
             self::loginAsUser(self::$authenticatedUser);
             return self::$authenticatedUser;
         }

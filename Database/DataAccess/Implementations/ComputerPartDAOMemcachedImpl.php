@@ -109,8 +109,11 @@ class ComputerPartDAOMemcachedImpl implements ComputerPartDAO
 
     public function getRandom(): ?ComputerPart
     {
+        print_r("mem getrandom");
         // クエリを使わないので、単純なO(n)アプローチです。
         $keys = $this->memcached->getAllKeys();
+        print_r( $keys);
+
         $computerPartKeys = array_filter($keys, fn($key) => str_starts_with($key, "ComputerPart_"));
 
         if (empty($computerPartKeys)) return null;

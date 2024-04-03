@@ -52,9 +52,9 @@ class ComputerPartDAOImpl implements ComputerPartDAO
 
     public function getRandom(): ?ComputerPart
     {
+
         $mysqli = DatabaseManager::getMysqliConnection();
         $computerPart = $mysqli->prepareAndFetchAll("SELECT * FROM computer_parts ORDER BY RAND() LIMIT 1", '', [])[0] ?? null;
-
         return $computerPart === null ? null : $this->resultToComputerPart($computerPart);
     }
 

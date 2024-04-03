@@ -12,6 +12,9 @@ class SignatureValidationMiddleware implements Middleware
 {
     public function handle(callable $next): HTTPRenderer
     {
+
+        error_log(sprintf("Running Middleware %s Preprocess", self::class));
+
         $currentPath = $_SERVER['REQUEST_URI'] ?? '';
         $parsedUrl = parse_url($currentPath);
         $pathWithoutQuery = $parsedUrl['path'] ?? '';
@@ -22,8 +25,12 @@ class SignatureValidationMiddleware implements Middleware
         // URLに有効な署名があるかチェックします。
         if ($route->isSignedURLValid($_SERVER['HTTP_HOST'] . $currentPath)) {
             // 有効期限があるかどうかを確認し、有効期限がある場合は有効期限が切れていないことを確認します。
-            if(isset($_GET['expiration']) && ValidationHelper::integer($_GET['expiration']) < time()){
+            error_log($pathWithoutQuery);
+
+            // なお、/verify/emailの場合はexpire時でも進める
+            if($pathWithoutQuery!=='/verify/email'&&isset($_GET['expiration']) && ValidationHelper::integer($_GET['expiration']) < time()){
                 FlashData::setFlashData('error', "The URL has expired.");
+                error_log("The URL has expired.");
                 return new RedirectRenderer('random/part');
             }
 

@@ -34,7 +34,47 @@ class UserDAOImpl implements UserDAO
 
         return true;
     }
+    public function update(User $user): bool
+    {
+        if ($user->getId() === null) throw new \Exception('Cannot update a user without ID ');
 
+        $mysqli = DatabaseManager::getMysqliConnection();
+
+        $query = "UPDATE users SET username = ?, email = ?, company = ? WHERE id = ?";
+
+        $result = $mysqli->prepareAndExecute(
+            $query,
+            'sssi',
+            [
+                $user->getUsername(),
+                $user->getEmail(),
+                $user->getCompany(),
+                $user->getId()
+            ]
+        );
+
+        if (!$result) return false;
+
+
+        return true;
+ 
+    }
+    public function confirmEmail(User $user): bool
+    {
+        if ($user->getId() === null) throw new \Exception('Cannot confirm email for a user without an ID.');
+    
+        $mysqli = DatabaseManager::getMysqliConnection();
+    
+        $query = "UPDATE users SET email_confirmed_at = NOW() WHERE id = ?";
+    
+        $result = $mysqli->prepareAndExecute(
+            $query,
+            'i',
+            [$user->getId()]
+        );
+    
+        return $result;
+    }
     private function getRawById(int $id): ?array{
         $mysqli = DatabaseManager::getMysqliConnection();
 
@@ -64,6 +104,7 @@ class UserDAOImpl implements UserDAO
             email: $rawData['email'],
             id: $rawData['id'],
             company: $rawData['company'] ?? null,
+            confirmedAt: $rawData['email_confirmed_at'] ?? null,
             timeStamp: new DataTimeStamp($rawData['created_at'], $rawData['updated_at'])
         );
     }

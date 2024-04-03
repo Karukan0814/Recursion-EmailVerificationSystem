@@ -11,10 +11,12 @@ class GuestMiddleware implements Middleware
     public function handle(callable $next): HTTPRenderer
     {
         error_log('Running authentication check...');
-        // ユーザーがログインしている場合は、メッセージなしでランダムパーツのページにリダイレクトします
+        // ユーザーがログインしている+既にconfirm済みの場合は、メッセージなしでランダムパーツのページにリダイレクトします
         if(Authenticate::isLoggedIn()){
+            error_log("is login true");
             return new RedirectRenderer('random/part');
         }
+        error_log("is login false");
 
         return $next();
     }

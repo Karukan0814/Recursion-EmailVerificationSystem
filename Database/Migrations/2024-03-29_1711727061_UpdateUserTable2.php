@@ -8,15 +8,13 @@ class UpdateUserTable2 implements SchemaMigration
 {
     public function up(): array
     {
-        return [
-            "ALTER TABLE users MODIFY COLUMN email_confirmed_at DATETIME"
-        ];
+        // マイグレーションロジックをここに追加してください
+        return [];
     }
 
     public function down(): array
     {
-        return [
-            "ALTER TABLE users MODIFY COLUMN email_confirmed_at VARCHAR(255)"
-        ];
+        // ロールバックロジックを追加してください
+        return [];
     }
 }

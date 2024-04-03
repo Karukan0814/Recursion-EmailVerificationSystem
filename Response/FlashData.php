@@ -9,10 +9,14 @@ class FlashData {
     }
 
     public static function getFlashData(string $name): mixed {
+        error_log("getFlashData");
         if(session_status() === PHP_SESSION_NONE) session_start();
+        error_log($name);
 
         if (isset($_SESSION['flash'][$name])) {
             $message = $_SESSION['flash'][$name];
+        error_log($message);
+
             unset($_SESSION['flash'][$name]);
             return $message;
         }

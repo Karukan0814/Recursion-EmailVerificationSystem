@@ -15,7 +15,7 @@ class DAOFactory
         $driver = Settings::env('DATABASE_DRIVER');
 
         return match ($driver) {
-            'memcached' => new ComputerPartDAOMemcachedImpl(),
+            // 'memcached' => new ComputerPartDAOMemcachedImpl(),
             default => new ComputerPartDAOImpl(),
         };
     }

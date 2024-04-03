@@ -13,6 +13,8 @@ class User implements Model {
         private string $email,
         private ?int $id = null,
         private ?string $company = null,
+        private ?string $confirmedAt = null,
+
         private ?DataTimeStamp $timeStamp = null,
     ) {}
 
@@ -46,6 +48,14 @@ class User implements Model {
 
     public function setCompany(?string $company): void {
         $this->company = $company;
+    }
+
+    public function getConfirmedAt(): ?string {
+        return $this->confirmedAt;
+    }
+
+    public function setConfirmedAt(?string $confirmedAt): void {
+        $this->confirmedAt = $confirmedAt;
     }
 
     public function getTimeStamp(): ?DataTimeStamp
