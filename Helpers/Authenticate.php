@@ -4,6 +4,7 @@ namespace Helpers;
 
 use Database\DataAccess\DAOFactory;
 use Exceptions\AuthenticationFailureException;
+use Exceptions\MailVerificationException;
 use Models\User;
 
 class Authenticate
@@ -40,12 +41,12 @@ class Authenticate
         self::$authenticatedUser = $userDao->getById($_SESSION[self::USER_ID_SESSION_KEY]);
     }
 
-    // public static function isConfirmed(): bool{
-    //     self::retrieveAuthenticatedUser();
+    public static function isConfirmed(): bool{
+        self::retrieveAuthenticatedUser();
 
-    //     //ユーザー情報が存在する、かつユーザーがconfirm済みか
-    //     return self::$authenticatedUser !== null&&self::$authenticatedUser->getConfirmedAt()!==null;
-    // }
+        //ユーザー情報が存在する、かつユーザーがconfirm済みか
+        return self::$authenticatedUser !== null&&self::$authenticatedUser->getConfirmedAt()!==null;
+    }
 
     public static function isLoggedIn(): bool{
         self::retrieveAuthenticatedUser();
@@ -58,7 +59,7 @@ class Authenticate
         // }
 
 
-        return self::$authenticatedUser !== null&&self::$authenticatedUser->getConfirmedAt()!==null;
+        return self::$authenticatedUser !== null;
     }
 
     public static function getAuthenticatedUser(): ?User{
@@ -76,12 +77,20 @@ class Authenticate
         // ユーザーが見つからない場合はnullを返します
         if (self::$authenticatedUser === null) throw new AuthenticationFailureException("Could not retrieve user by specified email %s " . $email);
 
+
+        
         // データベースからハッシュ化されたパスワードを取得します
         $hashedPassword = $userDAO->getHashedPasswordById(self::$authenticatedUser->getId());
 
         if (password_verify($password, $hashedPassword)){
             error_log("password OK");
+
+            // セッションにユーザー情報を格納＝ログイン処理
             self::loginAsUser(self::$authenticatedUser);
+
+            // しかし、まだメアドが検証されていない場合は検証エラー
+            if(!self::isConfirmed())  throw new MailVerificationException("this user has not been verified yet " . $email);
+            
             return self::$authenticatedUser;
         }
         else throw new AuthenticationFailureException("Invalid password.");

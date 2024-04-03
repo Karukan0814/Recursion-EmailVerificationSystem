@@ -9,6 +9,7 @@ use Response\HTTPRenderer;
 use Response\Render\HTMLRenderer;
 use Response\Render\RedirectRenderer;
 use Database\DataAccess\DAOFactory;
+use Exceptions\MailVerificationException;
 use Helpers\SendVerificationMail;
 use Response\Render\JSONRenderer;
 use Routing\Route;
@@ -21,6 +22,7 @@ return [
         return new HTMLRenderer('page/login');
     })->setMiddleware(['guest']),
     'form/login' => Route::create('form/login', function (): HTTPRenderer {
+        error_log("form/login");
         try {
             if ($_SERVER['REQUEST_METHOD'] !== 'POST') throw new Exception('Invalid request method!');
 
@@ -33,10 +35,13 @@ return [
 
             $userInfo=Authenticate::authenticate($validatedData['email'], $validatedData['password']);
             
-            Authenticate::loginAsUser($userInfo);
             FlashData::setFlashData('success', 'Logged in successfully.');
             return new RedirectRenderer('random/part');
-        } catch (AuthenticationFailureException $e) {
+        } catch (MailVerificationException $e) {
+            error_log($e->getMessage());
+            FlashData::setFlashData('error', 'Failed to login, not verified yet.');
+            return new RedirectRenderer('verify/resend');
+        }catch (AuthenticationFailureException $e) {
             error_log($e->getMessage());
 
             FlashData::setFlashData('error', 'Failed to login, wrong email and/or password.');
@@ -109,8 +114,8 @@ return [
             $queryParameters = [];
             $queryParameters['id'] = $userInfo->getId();
             $queryParameters['user'] = $userInfo->getUsername();
-            $queryParameters['expiration'] = time() + (30 * 60); //現在時刻＋３０分後をexpire時刻にする
-            // $queryParameters['expiration'] = time() + (10); //test 10s
+            // $queryParameters['expiration'] = time() + (30 * 60); //現在時刻＋３０分後をexpire時刻にする
+            $queryParameters['expiration'] = time() + (10); //test 10s
 
 
             // 例：https://yourdomain.com/verify/email?id=434554&user=179e9c6498071768e9c6dcb606be681b35ec39d7c1cd462af5eee998793de96a&expiration=1686451200&signature=dc6f3568745f317e0227956332b7845187a8f6b6b46f1b21e533957454cd11d9
@@ -123,7 +128,7 @@ return [
 
 
             // ユーザーログイン
-            Authenticate::loginAsUser($user);
+            $loginResult=Authenticate::loginAsUser($user);
 
             FlashData::setFlashData('success', 'verification mail was sent to your mail.');
             return new RedirectRenderer('register');
@@ -143,8 +148,11 @@ return [
         Authenticate::logoutUser();
         FlashData::setFlashData('success', 'Logged out.');
         return new RedirectRenderer('login');
-    })->setMiddleware(['auth']),
+    }),
     'random/part' => Route::create('random/part', function (): HTTPRenderer {
+        error_log("random/part");
+
+
         $partDao = DAOFactory::getComputerPartDAO();
         $part = $partDao->getRandom();
         if($part === null) throw new Exception('No parts are available!');
@@ -330,11 +338,11 @@ return [
         // 'signature'を指定することで、ミドルウェアのSignatureValidationMiddlewareを呼び出している。
         // これは URLに有効な署名があるか、期限切れでないかを確認している
     })->setMiddleware(['signature']),
-    'verify/resend' => Route::create('login', function (): HTTPRenderer {
+    'verify/resend' => Route::create('verify/resend', function (): HTTPRenderer {
 
         return new HTMLRenderer('component/resend-verification', ['userInfo' => Authenticate::getAuthenticatedUser()]);
     }),
-    'verify/form/resend' => Route::create('verify/resend', function (): HTTPRenderer {
+    'verify/form/resend' => Route::create('verify/form/resend', function (): HTTPRenderer {
 
         error_log("verify/resend");
         // リクエストメソッドがPOSTかどうかをチェックします
@@ -383,5 +391,5 @@ return [
 
         return new RedirectRenderer('login');
 
-    })->setMiddleware(['guest']),
+    }),
 ];
